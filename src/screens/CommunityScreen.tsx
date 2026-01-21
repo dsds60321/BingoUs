@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  Alert,
   Image,
   ScrollView,
   StyleSheet,
@@ -10,15 +9,21 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Bell, Plus } from '../components/Icons';
+import PostDetail from './community/PostDetail';
+import PostCreate from './community/PostCreate';
 
 const CommunityScreen = () => {
   const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState('Photos');
+  const [viewMode, setViewMode] = useState<'list' | 'detail' | 'create'>('list');
+  const [selectedItem, setSelectedItem] = useState<any>(null);
+
   const tabs = ['Photos', 'Diary', 'Missions', 'Reflections'];
 
-  const allPosts = [
+  const [posts, setPosts] = useState([
     // Photos
     {
+      id: 'p1',
       category: 'Photos',
       title: 'Our trip to the beach',
       description:
@@ -28,6 +33,7 @@ const CommunityScreen = () => {
         'https://lh3.googleusercontent.com/aida-public/AB6AXuA4yHeE0e6Vy2qvkwCkVn_gJBrB7T0GFrz5iJtHgr7egokvtpX3U1Zu4cpSiMblxKIYIC0Av-baLJ_dollZFhEO6zcJy_eNACitCA-moNz0Ej8CkLj1CDjX_X9iGFethKl7A_ljGoUUOjdESbGy17dS_93_Ngjx4CD2H1dwJ6cXz4QCFUgzqojtypirq5xdckop6VMJNROqXA92SUdx3jDJFI2_tLtGKcor24WTumXDeTOS-uVSjM8cjspU_4K9oDREOVpfJ9gj1YP1',
     },
     {
+      id: 'p2',
       category: 'Photos',
       title: 'Dinner date',
       description: 'We went to a fancy restaurant for dinner tonight.',
@@ -37,6 +43,7 @@ const CommunityScreen = () => {
     },
     // Diary
     {
+      id: 'd1',
       category: 'Diary',
       title: 'A quiet evening',
       description:
@@ -46,6 +53,7 @@ const CommunityScreen = () => {
         'https://lh3.googleusercontent.com/aida-public/AB6AXuBmc14yu1Mnc-9XY-yhFGCBW_-IjKCJyOH5Yj_czAlH_5xMHmKhthmpWlPOcGVu8Q-qysJCTKqzjb3au9tPX1p6Ls-nPdikcR-GH4zzH6CBk3e0rfZms_j_8CCg7G_SHlDXYDcRsoL2WCFOyb9OFo3tn2zz8UCgXDgxlcG63J_rBdroqv6FYhQTT9ww1Omj_1Qg6ovtSaz6a2jljNMsjsrFjhBqWoShsoONqldAHoGKlYGP-UHtnlIW5tVOBLxdBwHKJe3DK0w8o3ji',
     },
     {
+      id: 'd2',
       category: 'Diary',
       title: 'Morning Coffee',
       description:
@@ -56,65 +64,124 @@ const CommunityScreen = () => {
     },
     // Missions
     {
+      id: 'm1',
       category: 'Missions',
       title: 'Cook a new recipe',
       description: 'Make pasta from scratch together.',
       status: 'In Progress',
       date: '2024-07-15',
+      deadline: '2024-07-20',
+      betting: 'Loser does dishes',
       image:
         'https://lh3.googleusercontent.com/aida-public/AB6AXuCwcHZvRtSUvicNcW3EBaUAQZAQXS2yDGkDE5EtQ0h8zi8WjYyR64mXLDbJ2nPHCDwOYeCSGUu3x9tp8Y-sZoCqvXrqNbsyQ1F9eDGh5qZ4q0k4qkqVUhhf1x_OkFqcBELno8qRBgLJhMJzCbGYdpgEsBIZgTmSPRk4zl8cKZCiKtKHZDtGCS-XQ6q-mckf-Uc5ajXFuWEnhAaGt4kZ6WjDTkI7AgVNlxiPL8rHCrQFuM3jt_qNveMZZkeGYdFW8zuxSsGTcgg9mm8K',
     },
     {
+      id: 'm2',
       category: 'Missions',
       title: 'Visit a museum',
       description: 'Go to the modern art museum downtown.',
       status: 'Completed',
       date: '2024-07-01',
+      deadline: '2024-07-05',
+      betting: 'Winner picks dinner',
       image:
         'https://lh3.googleusercontent.com/aida-public/AB6AXuDierb3Xd_BNtMs4iV4uiwzNnpWssZSXGBHUR4-YMWOhERl-VxuCVN8ldj9HdzAqaJrsaX04eY37rSFf6Yh_28zdO1SQ4EtfDl2y4kljmryhaDu2GGbrW3Fcb5qHXaZQlYUBgwQC99GSeXugMe9D5EwM2rOQ80b81iU_m1h4DEjMYWZWbyVD-081N_ylhrpEQCZdUQ5nvJxOWtnFINE4DE7zrwbAUtGPKgK52Y9MJew0R2hIq7dpBp41faCr02hSWRuMLB1JX976xxp',
     },
     // Reflections
     {
+      id: 'r1',
       category: 'Reflections',
+      title: 'I realized my mistake',
+      topic: 'Communication',
       content:
-        'I feel so grateful when we spend time just talking without any distractions. It makes me feel heard and loved.',
+        'I feel so grateful when we spend time just talking without any distractions. It makes me feel heard and loved. I am sorry for checking my phone too much.',
       date: '2024-07-12',
+      status: 'Acknowledged',
     },
     {
+      id: 'r2',
       category: 'Reflections',
+      title: 'Sorry about yesterday',
+      topic: 'Arguments',
       content:
-        'Today I realized how much we have grown together. Looking back at our old photos, we have come such a long way.',
+        'Today I realized how much we have grown together. Looking back at our old photos, we have come such a long way. I should have been more patient.',
       date: '2024-07-10',
+      status: 'Pending',
     },
-  ];
+  ]);
 
-  const filteredPosts = allPosts.filter(post => post.category === activeTab);
+  const filteredPosts = posts.filter(post => post.category === activeTab);
 
   const handleAddPress = () => {
-    Alert.alert(
-      'Add New',
-      `Navigate to add new ${activeTab.toLowerCase()} entry.`,
-    );
+    setViewMode('create');
   };
 
-  const renderItem = (post: any, index: number) => {
+  const handlePostPress = (post: any) => {
+    setSelectedItem(post);
+    setViewMode('detail');
+  };
+
+  const handleBack = () => {
+    setViewMode('list');
+    setSelectedItem(null);
+  };
+
+  const handleCreateSubmit = (newItem: any) => {
+    setPosts([newItem, ...posts]);
+    setViewMode('list');
+  };
+
+  const handleUpdateItem = (updatedItem: any) => {
+    setPosts(posts.map(p => (p.id === updatedItem.id ? updatedItem : p)));
+    setSelectedItem(updatedItem); // Update current view
+  };
+
+  if (viewMode === 'detail' && selectedItem) {
+    return (
+      <PostDetail
+        item={selectedItem}
+        onBack={handleBack}
+        onUpdate={handleUpdateItem}
+      />
+    );
+  }
+
+  if (viewMode === 'create') {
+    return (
+      <PostCreate
+        category={activeTab}
+        onBack={handleBack}
+        onSubmit={handleCreateSubmit}
+      />
+    );
+  }
+
+  const renderItem = (post: any) => {
+    const commonProps = {
+      key: post.id || Math.random().toString(), // Fallback key
+      activeOpacity: 0.9,
+      onPress: () => handlePostPress(post),
+    };
+
     if (activeTab === 'Photos') {
       return (
-        <View key={index} style={styles.postCard}>
+        <TouchableOpacity {...commonProps} style={styles.postCard}>
           <Image source={{ uri: post.image }} style={styles.postImage} />
           <View style={styles.postContent}>
             <Text style={styles.postTitle}>{post.title}</Text>
             <Text style={styles.postDescription}>{post.description}</Text>
             <Text style={styles.postDate}>{post.date}</Text>
           </View>
-        </View>
+        </TouchableOpacity>
       );
     }
 
     if (activeTab === 'Diary') {
       return (
-        <View key={index} style={styles.diaryCard}>
-          <Image source={{ uri: post.image }} style={styles.diaryImage} />
+        <TouchableOpacity {...commonProps} style={styles.diaryCard}>
+          {post.image ? (
+            <Image source={{ uri: post.image }} style={styles.diaryImage} />
+          ) : null}
           <View style={styles.diaryContent}>
             <Text style={styles.diaryTitle}>{post.title}</Text>
             <Text style={styles.diaryPreview} numberOfLines={2}>
@@ -122,14 +189,14 @@ const CommunityScreen = () => {
             </Text>
             <Text style={styles.diaryDate}>{post.date}</Text>
           </View>
-        </View>
+        </TouchableOpacity>
       );
     }
 
     if (activeTab === 'Missions') {
       return (
-        <View key={index} style={styles.missionCard}>
-          <Image source={{ uri: post.image }} style={styles.missionImage} />
+        <TouchableOpacity {...commonProps} style={styles.missionCard}>
+          {post.image ? <Image source={{ uri: post.image }} style={styles.missionImage} /> : null}
           <View style={styles.missionOverlay}>
             <View style={styles.missionContent}>
               <View style={styles.missionHeader}>
@@ -146,19 +213,24 @@ const CommunityScreen = () => {
                 </View>
               </View>
               <Text style={styles.missionDescription}>{post.description}</Text>
-              <Text style={styles.missionDate}>{post.date}</Text>
+              <Text style={styles.missionDate}>Deadline: {post.deadline || post.date}</Text>
             </View>
           </View>
-        </View>
+        </TouchableOpacity>
       );
     }
 
     if (activeTab === 'Reflections') {
       return (
-        <View key={index} style={styles.reflectionCard}>
-          <Text style={styles.reflectionContent}>{post.content}</Text>
+        <TouchableOpacity {...commonProps} style={styles.reflectionCard}>
+           <View style={styles.reflectionHeader}>
+              <Text style={styles.reflectionTopic}>{post.topic || 'Reflection'}</Text>
+              {post.status === 'Acknowledged' && <Text style={styles.reflectionStatus}>✓ Confirmed</Text>}
+           </View>
+          <Text style={styles.reflectionTitle}>{post.title}</Text>
+          <Text style={styles.reflectionPreview} numberOfLines={3}>{post.content || post.description}</Text>
           <Text style={styles.reflectionDate}>{post.date}</Text>
-        </View>
+        </TouchableOpacity>
       );
     }
 
@@ -205,7 +277,7 @@ const CommunityScreen = () => {
         {/* Feed List */}
         <View style={styles.feedList}>
           {filteredPosts.length > 0 ? (
-            filteredPosts.map((post, index) => renderItem(post, index))
+            filteredPosts.map((post) => renderItem(post))
           ) : (
             <View style={styles.emptyState}>
               <Text style={styles.emptyStateText}>
@@ -218,7 +290,7 @@ const CommunityScreen = () => {
 
       {/* Floating Action Button */}
       <TouchableOpacity
-        style={[styles.fab, { bottom: 20 }]}
+        style={[styles.fab, styles.fabPosition]}
         onPress={handleAddPress}
         activeOpacity={0.8}
       >
@@ -435,13 +507,36 @@ const styles = StyleSheet.create({
     padding: 24,
     borderWidth: 1,
     borderColor: '#f2e6d9',
-    gap: 16,
+    gap: 12,
   },
-  reflectionContent: {
-    fontSize: 16,
+  reflectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  reflectionTopic: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#896b61',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  reflectionStatus: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#2e7d32',
+  },
+  reflectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#181311',
+  },
+  reflectionPreview: {
+    fontSize: 15,
     fontWeight: '400',
     color: '#4a3b32',
-    lineHeight: 26,
+    lineHeight: 24,
     fontStyle: 'italic',
   },
   reflectionDate: {
@@ -449,6 +544,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#896b61',
     textAlign: 'right',
+    marginTop: 8,
   },
 
   emptyState: {
@@ -475,6 +571,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 6,
+  },
+  fabPosition: {
+    bottom: 20,
   },
 });
 

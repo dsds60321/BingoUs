@@ -74,7 +74,7 @@ const DashboardScreen = () => {
           </View>
         </View>
 
-        <View style={{ height: 20 }} />
+        <View style={styles.spacer} />
       </ScrollView>
     </View>
   );
@@ -84,6 +84,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'white',
+  },
+  spacer: {
+    height: 20,
   },
   header: {
     flexDirection: 'row',

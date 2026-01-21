@@ -7,6 +7,7 @@ import ChatScreen from './src/screens/ChatScreen';
 import CommunityScreen from './src/screens/CommunityScreen';
 import SettingScreen from './src/screens/SettingScreen';
 import BottomNav from './src/components/BottomNav';
+import { GlobalDialog } from './src/components/GlobalDialog';
 
 type TabName = 'Home' | 'Calendar' | 'Chat' | 'Community' | 'Settings';
 
@@ -46,6 +47,7 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <AppContent />
+      <GlobalDialog />
     </SafeAreaProvider>
   );
 }
