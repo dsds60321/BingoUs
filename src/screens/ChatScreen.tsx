@@ -1,12 +1,14 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, ScrollView, Image, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, ScrollView, Image, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { launchCamera, launchImageLibrary, ImagePickerResponse } from 'react-native-image-picker';
 import { ArrowLeft, Image as ImageIcon, Camera } from '../components/Icons';
+import { chatApi, ChatMessage } from '../api/chat';
+import { authApi } from '../api/auth';
 
 interface Message {
   id: string;
-  sender: 'Liam' | 'Olivia';
+  sender: string;
   text?: string;
   image?: string;
   isMe: boolean;
@@ -17,91 +19,96 @@ const ChatScreen = () => {
   const insets = useSafeAreaInsets();
   const scrollViewRef = useRef<ScrollView>(null);
   const [inputText, setInputText] = useState('');
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      sender: 'Liam',
-      text: "Hey, how's your day going? I'm thinking about our weekend getaway. Any ideas?",
-      isMe: false,
-      avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuAG-49Bqblo9YiqiRm95ldT-VedU9-vhGuAWVvJP17Wlk9Bu4IN7oQAU8MVNWBWeopdmWfmGkiSg6QjtMk-q4QNY7Z-ud0zv1FsZSHLTHwYZbHf5HAt5AZm1pH5VVW9oNMTkfUGQV_y6xBkeNbKXXVsJkTtyBVciDXjR_eo8rsrL1N1S0rZQ-fHNNZu3SPd9Vsg49P7lrGExQae-zhnLXeNf8dRKKxFiDrEsUs6pJsUkN6v_XA7XyUye_t83tVTgV6vX4_PUHZHWHEB"
-    },
-    {
-      id: '2',
-      sender: 'Olivia',
-      text: "Hi! My day's been good, just finished a big project. For the weekend, how about that hiking trail we talked about? Or maybe a cozy cabin?",
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [myId, setMyId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    initializeChat();
+  }, []);
+
+  const initializeChat = async () => {
+    try {
+      // Get my ID
+      const meResponse = await authApi.getMe();
+      const currentUserId = meResponse.data.id;
+      setMyId(currentUserId);
+
+      // Get messages
+      await fetchMessages(currentUserId);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchMessages = async (currentUserId: string) => {
+    try {
+      const response = await chatApi.getMessages();
+      const mappedMessages = response.data.messages.map((msg: ChatMessage) => ({
+        id: msg.id,
+        sender: msg.senderId === currentUserId ? 'Me' : 'Partner', // Simplified name logic
+        text: msg.type === 'text' ? msg.text : undefined,
+        image: msg.type === 'image' ? msg.text : undefined, // Assuming image URL is in text field for now or handled differently
+        isMe: msg.senderId === currentUserId,
+        avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuAG-49Bqblo9YiqiRm95ldT-VedU9-vhGuAWVvJP17Wlk9Bu4IN7oQAU8MVNWBWeopdmWfmGkiSg6QjtMk-q4QNY7Z-ud0zv1FsZSHLTHwYZbHf5HAt5AZm1pH5VVW9oNMTkfUGQV_y6xBkeNbKXXVsJkTtyBVciDXjR_eo8rsrL1N1S0rZQ-fHNNZu3SPd9Vsg49P7lrGExQae-zhnLXeNf8dRKKxFiDrEsUs6pJsUkN6v_XA7XyUye_t83tVTgV6vX4_PUHZHWHEB" // Placeholder avatar
+      }));
+      setMessages(mappedMessages);
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleSend = async () => {
+    if (!inputText.trim()) return;
+    
+    const tempId = Date.now().toString();
+    const textToSend = inputText;
+    setInputText('');
+
+    // Optimistic update
+    const optimisticMessage: Message = {
+      id: tempId,
+      sender: 'Me',
+      text: textToSend,
       isMe: true,
       avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuBAL2Io6Gg9Te2wDZXUJ8VX5ivRtG90UDLRj3pGJ7LZY2Ko5UD01JHQs3X86nlRggNmLDZG49CWXIAWnPLNAzcRKzPueBDoyKyDNqvxjrbjQSCOx0oxGjw3do_7rqF9yKlre65j14nnaJPE2jLjnWBOl4C8FdnWLhP7dhK9wasLBQDLcdkzD94-vOR3pWskh29zhFGMlsin8GPPvPkHmhl0TeDizWGxEv-552mCyjeIOVDsL6-cS1XUfT8w6FaiL1VzU-p_mt2TEckM"
-    },
-    {
-      id: '3',
-      sender: 'Liam',
-      text: "Hiking sounds amazing! The trail with the waterfall? And a cabin would be perfect for the evening. I'll check availability.",
-      isMe: false,
-      avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuAwg1yQd3Z0MB5IoEjZIdua4_-t9N3XXlVrgY8EVgSWyP6mO92Ob_r32pSUbTTFZZkItT3m_qYpLuHKYZS0Oehw1AbUntbpfXbhEii2lP42yMU5bOFbzVgMfJMVVXL2ePuV_NFnO1Np997AlU3BDFFKVKG81stczSPfD5gxGImoHxUPXiRwzXyeIrRAA_5CAyfi9d-47WEZGWWdS2s7w0P1QmFCl1hNhIcg4snG-ZSR4MsCJqAIDGn73DPMdnzgirO4oJjKAI-xLZDO"
-    },
-    {
-      id: '4',
-      sender: 'Olivia',
-      text: "Yes, the waterfall trail! And if we can find a cabin with a fireplace, that would be the dream. Let me know what you find!",
-      isMe: true,
-      avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuAlh2xOeSvrgPBXyivU_4GTtpPOWp9nizGhE1kjzCPAZuMXpeBCIs63AeZlSUXUiFw-1Pf9vC-l0q4jZgkIVZLICoQ9g0XC53hUFpWG2305yHs9LCOdgPx8dJ4dod7iO2BLw6JJTjKcMyn6kJQ8uZ7AFvoGoCe3VoZRJu_avQkoUExAn8MAJOBGlXVTmDPh3PvkJrl4tlPYmrextsTyVtApiMdDSjRjKw6XMkTRPIHTEJ3HceKY8SY9HiNWkofOJ28HKrPccpv5XKyz"
+    };
+    setMessages(prev => [...prev, optimisticMessage]);
+    
+    try {
+      await chatApi.sendMessage({
+        text: textToSend,
+        clientMessageId: tempId,
+        type: 'text'
+      });
+      // Optionally refresh messages to get real ID/timestamp
+    } catch (error) {
+      console.error("Failed to send", error);
+      // Handle error (remove optimistic message or show error)
     }
-  ]);
-
-  const addMessage = (message: Message) => {
-    setMessages(prev => [...prev, message]);
+    
     setTimeout(() => {
       scrollViewRef.current?.scrollToEnd({ animated: true });
     }, 100);
   };
 
-  const handleSend = () => {
-    if (!inputText.trim()) return;
-    
-    addMessage({
-      id: Date.now().toString(),
-      sender: 'Olivia',
-      text: inputText,
-      isMe: true,
-      avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuBAL2Io6Gg9Te2wDZXUJ8VX5ivRtG90UDLRj3pGJ7LZY2Ko5UD01JHQs3X86nlRggNmLDZG49CWXIAWnPLNAzcRKzPueBDoyKyDNqvxjrbjQSCOx0oxGjw3do_7rqF9yKlre65j14nnaJPE2jLjnWBOl4C8FdnWLhP7dhK9wasLBQDLcdkzD94-vOR3pWskh29zhFGMlsin8GPPvPkHmhl0TeDizWGxEv-552mCyjeIOVDsL6-cS1XUfT8w6FaiL1VzU-p_mt2TEckM"
-    });
-    setInputText('');
-  };
-
   const handleImagePicker = async () => {
+    // Image upload not fully implemented in this MVP step (requires upload API)
+    // Just showing picker for UI demo
     const result: ImagePickerResponse = await launchImageLibrary({
       mediaType: 'photo',
       selectionLimit: 1,
     });
-
-    if (result.assets && result.assets.length > 0) {
-      const asset = result.assets[0];
-      addMessage({
-        id: Date.now().toString(),
-        sender: 'Olivia',
-        image: asset.uri,
-        isMe: true,
-        avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuBAL2Io6Gg9Te2wDZXUJ8VX5ivRtG90UDLRj3pGJ7LZY2Ko5UD01JHQs3X86nlRggNmLDZG49CWXIAWnPLNAzcRKzPueBDoyKyDNqvxjrbjQSCOx0oxGjw3do_7rqF9yKlre65j14nnaJPE2jLjnWBOl4C8FdnWLhP7dhK9wasLBQDLcdkzD94-vOR3pWskh29zhFGMlsin8GPPvPkHmhl0TeDizWGxEv-552mCyjeIOVDsL6-cS1XUfT8w6FaiL1VzU-p_mt2TEckM"
-      });
-    }
+    // Implementation skipped for MVP as per instructions to focus on basic API
   };
 
   const handleCamera = async () => {
-    const result: ImagePickerResponse = await launchCamera({
-      mediaType: 'photo',
-      saveToPhotos: true,
-    });
-
-    if (result.assets && result.assets.length > 0) {
-      const asset = result.assets[0];
-      addMessage({
-        id: Date.now().toString(),
-        sender: 'Olivia',
-        image: asset.uri,
-        isMe: true,
-        avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuBAL2Io6Gg9Te2wDZXUJ8VX5ivRtG90UDLRj3pGJ7LZY2Ko5UD01JHQs3X86nlRggNmLDZG49CWXIAWnPLNAzcRKzPueBDoyKyDNqvxjrbjQSCOx0oxGjw3do_7rqF9yKlre65j14nnaJPE2jLjnWBOl4C8FdnWLhP7dhK9wasLBQDLcdkzD94-vOR3pWskh29zhFGMlsin8GPPvPkHmhl0TeDizWGxEv-552mCyjeIOVDsL6-cS1XUfT8w6FaiL1VzU-p_mt2TEckM"
-      });
-    }
+     // Implementation skipped for MVP
   };
 
   return (
@@ -125,7 +132,10 @@ const ChatScreen = () => {
           contentContainerStyle={styles.scrollContent}
           onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
         >
-          {messages.map((msg) => (
+          {loading ? (
+             <ActivityIndicator size="large" color="#ed825e" style={{ marginTop: 20 }} />
+          ) : (
+            messages.map((msg) => (
             <View key={msg.id} style={msg.isMe ? styles.messageRowRight : styles.messageRowLeft}>
               {!msg.isMe && (
                 <Image source={{ uri: msg.avatar }} style={styles.avatar} />
@@ -146,7 +156,7 @@ const ChatScreen = () => {
                 <Image source={{ uri: msg.avatar }} style={styles.avatar} />
               )}
             </View>
-          ))}
+          )))}
         </ScrollView>
 
         {/* Input Area */}

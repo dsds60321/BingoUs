@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { authApi } from '../api/auth';
+import { Heart } from '../components/Icons';
 
 interface LoginScreenProps {
   onLoginSuccess: () => void;
@@ -19,95 +20,181 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
 
     try {
       setLoading(true);
-      // For MVP/Demo, allow any login or valid credentials.
-      // In real app: await authApi.login({ provider: 'local', email, password });
-      
-      // Simulate API call for now if backend isn't ready, or use the real one.
-      // Since the user asked for the library, I should probably try to use it
-      // but if the backend is not running, it will fail.
-      // I will assume for now we call the API, but if it fails I might mock it for demo if requested.
-      // However, the prompt is about "creating the library", so I should integrate it properly.
-      
-      // console.log("Attempting login...");
-      // await authApi.login({ provider: 'local', email, password });
-      
-      // For now, just trigger success to show the flow, 
-      // as we don't have a running backend in this environment.
-      // But I will write the code to use the API.
-      
-      // Uncomment when backend is ready:
       await authApi.login({ provider: 'local', email, password });
-
-      // Mock success for UI demo:
       onLoginSuccess();
     } catch (error: any) {
-      Alert.alert('Login Failed', error.message || 'Unknown error');
+      console.error(error);
+      Alert.alert('Login Failed', error.response?.data?.error?.message || error.message || 'Unknown error');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>BingoUs</Text>
-      <View style={styles.form}>
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
-        <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
-          <Text style={styles.buttonText}>{loading ? 'Logging in...' : 'Login'}</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+    <KeyboardAvoidingView 
+      style={styles.container} 
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.headerContainer}>
+          <View style={styles.iconCircle}>
+            <Heart size={48} color="#FF6B6B" weight="fill" />
+          </View>
+          <Text style={styles.title}>BingoUs</Text>
+          <Text style={styles.subtitle}>Connect with your better half</Text>
+        </View>
+
+        <View style={styles.card}>
+          <View style={styles.form}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Email</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your email"
+                placeholderTextColor="#A0908D"
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+              />
+            </View>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Password</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your password"
+                placeholderTextColor="#A0908D"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+              />
+            </View>
+            <TouchableOpacity 
+              style={styles.button} 
+              onPress={handleLogin} 
+              disabled={loading}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.buttonText}>{loading ? 'Connecting...' : 'Login'}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+        
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Don't have an account?</Text>
+          <TouchableOpacity>
+            <Text style={styles.linkText}>Sign Up</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#FFF0F5', // Lavender Blush / Soft Pink
+  },
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
-    padding: 20,
-    backgroundColor: '#fff',
+    padding: 24,
+  },
+  headerContainer: {
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  iconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#FFE4E8',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    shadowColor: '#FF6B6B',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
+    fontSize: 36,
+    fontWeight: '800',
+    color: '#4A3B32', // Dark warm brown
     textAlign: 'center',
-    marginBottom: 40,
-    color: '#181311',
+    marginBottom: 8,
+    letterSpacing: -0.5,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#8D7B76',
+    fontWeight: '500',
+  },
+  card: {
+    backgroundColor: 'white',
+    borderRadius: 24,
+    padding: 24,
+    shadowColor: '#4A3B32',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.05,
+    shadowRadius: 16,
+    elevation: 8,
   },
   form: {
-    gap: 16,
+    gap: 20,
+  },
+  inputGroup: {
+    gap: 8,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#4A3B32',
+    marginLeft: 4,
   },
   input: {
+    backgroundColor: '#F9F5F4',
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#F0E6E4',
     padding: 16,
-    borderRadius: 8,
+    borderRadius: 16,
     fontSize: 16,
+    color: '#4A3B32',
   },
   button: {
-    backgroundColor: '#181311',
-    padding: 16,
-    borderRadius: 8,
+    backgroundColor: '#FF6B6B', // Soft Coral/Pink
+    paddingVertical: 18,
+    borderRadius: 16,
     alignItems: 'center',
+    marginTop: 8,
+    shadowColor: '#FF6B6B',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   buttonText: {
     color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 32,
+    gap: 6,
+  },
+  footerText: {
+    color: '#8D7B76',
+    fontSize: 14,
+  },
+  linkText: {
+    color: '#FF6B6B',
+    fontSize: 14,
+    fontWeight: '700',
   },
 });
 

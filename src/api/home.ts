@@ -4,16 +4,16 @@ export interface HomeData {
   data: {
     couple: {
       name: string;
-      dDay: number;
-      backgroundImageUrl: string;
+      d_day: number;
+      background_image_url: string | null;
     };
-    dailyQuestion: {
+    daily_question: {
       id: number;
       question: string;
-      myAnswer: string | null;
-      partnerAnswer: { answered: boolean } | null;
-    };
-    unreadNotifications: number;
+      my_answer: string | null;
+      partner_answer: { answered: boolean } | null;
+    } | null;
+    unread_notifications: number;
   };
 }
 

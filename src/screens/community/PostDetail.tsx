@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,9 +7,12 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CaretLeft } from '../../components/Icons';
+import { communityApi } from '../../api/community';
+import { missionsApi } from '../../api/missions';
 
 type PostDetailProps = {
   item: any;
@@ -19,19 +22,44 @@ type PostDetailProps = {
 
 const PostDetail = ({ item, onBack, onUpdate }: PostDetailProps) => {
   const insets = useSafeAreaInsets();
+  const [loading, setLoading] = useState(false);
 
   const handleAcknowledge = () => {
     Alert.alert('Confirm', 'Do you acknowledge this reflection?', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Yes, I understand',
-        onPress: () => {
-          if (onUpdate) {
-            onUpdate({ ...item, status: 'Acknowledged' });
+        onPress: async () => {
+          try {
+            setLoading(true);
+            await communityApi.markAsRead(item.id);
+            if (onUpdate) {
+              onUpdate({ ...item, status: 'Acknowledged' });
+            }
+          } catch (error) {
+            console.error(error);
+            Alert.alert('Error', 'Failed to acknowledge');
+          } finally {
+            setLoading(false);
           }
         },
       },
     ]);
+  };
+
+  const handleCompleteMission = async () => {
+    try {
+      setLoading(true);
+      await missionsApi.completeMission(item.id);
+      if (onUpdate) {
+        onUpdate({ ...item, status: 'Completed' });
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'Failed to complete mission');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const renderContent = () => {
@@ -90,9 +118,14 @@ const PostDetail = ({ item, onBack, onUpdate }: PostDetailProps) => {
             {item.status !== 'Completed' && (
               <TouchableOpacity
                 style={styles.actionButton}
-                onPress={() => onUpdate && onUpdate({ ...item, status: 'Completed' })}
+                onPress={handleCompleteMission}
+                disabled={loading}
               >
-                <Text style={styles.actionButtonText}>Mark as Completed</Text>
+                {loading ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <Text style={styles.actionButtonText}>Mark as Completed</Text>
+                )}
               </TouchableOpacity>
             )}
           </View>
@@ -126,8 +159,13 @@ const PostDetail = ({ item, onBack, onUpdate }: PostDetailProps) => {
               <TouchableOpacity
                 style={styles.confirmButton}
                 onPress={handleAcknowledge}
+                disabled={loading}
               >
-                <Text style={styles.confirmButtonText}>Acknowledge & Confirm</Text>
+                 {loading ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <Text style={styles.confirmButtonText}>Acknowledge & Confirm</Text>
+                )}
               </TouchableOpacity>
             )}
           </View>

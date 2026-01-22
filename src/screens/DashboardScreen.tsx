@@ -1,10 +1,46 @@
-import React from 'react';
-import { View, Text, ScrollView, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, ScrollView, Image, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Gear } from '../components/Icons';
+import { homeApi, HomeData } from '../api/home';
 
 const DashboardScreen = () => {
   const insets = useSafeAreaInsets();
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<HomeData['data'] | null>(null);
+
+  useEffect(() => {
+    fetchHomeData();
+  }, []);
+
+  const fetchHomeData = async () => {
+    try {
+      setLoading(true);
+      const response = await homeApi.getHome();
+      setData(response.data);
+    } catch (error: any) {
+      console.error(error);
+      Alert.alert('Error', 'Failed to load home data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.center, { paddingTop: insets.top }]}>
+        <ActivityIndicator size="large" color="#181311" />
+      </View>
+    );
+  }
+
+  if (!data) {
+    return (
+      <View style={[styles.container, styles.center, { paddingTop: insets.top }]}>
+        <Text>No data available</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -21,29 +57,38 @@ const DashboardScreen = () => {
         {/* Profile Section */}
         <View style={styles.profileSection}>
           <Image
-            source={{ uri: "https://lh3.googleusercontent.com/aida-public/AB6AXuBPYXHpeuxKJuuUeL-R4WuLoqd03uNUu7KPLWKE5VtVlCaMfs_BqP_M5x2B57DVbX9OqHWRN-4VmLDU-svAYZqdJqZv5qRqXDMok9-ElpF1sdyROUjF_icogjUw8x43QuPxMWJdEVk_PA5YyEp5TQJLhqJASktW7J8llJxv_XLBZ-wqN7r7uW4gbDryt84Dt8KDMmTZwVNmwTJlhiqbl40qN4TjfX714YeslsDWeA6Pfk7hBXuKZQ8xZvO3FqginTdFy3f4n7oUZT2R" }}
+            source={{ uri: data.couple.background_image_url || "https://lh3.googleusercontent.com/aida-public/AB6AXuBPYXHpeuxKJuuUeL-R4WuLoqd03uNUu7KPLWKE5VtVlCaMfs_BqP_M5x2B57DVbX9OqHWRN-4VmLDU-svAYZqdJqZv5qRqXDMok9-ElpF1sdyROUjF_icogjUw8x43QuPxMWJdEVk_PA5YyEp5TQJLhqJASktW7J8llJxv_XLBZ-wqN7r7uW4gbDryt84Dt8KDMmTZwVNmwTJlhiqbl40qN4TjfX714YeslsDWeA6Pfk7hBXuKZQ8xZvO3FqginTdFy3f4n7oUZT2R" }}
             style={styles.profileImage}
           />
           <View style={styles.profileTextContainer}>
-            <Text style={styles.greetingText}>Hi, Alex & Sarah</Text>
-            <Text style={styles.subGreetingText}>You've been together for 2 years</Text>
+            <Text style={styles.greetingText}>Hi, {data.couple.name}</Text>
+            <Text style={styles.subGreetingText}>You've been together for {data.couple.d_day} days</Text>
           </View>
         </View>
 
         {/* Daily Connection */}
         <Text style={styles.sectionTitle}>Daily Connection</Text>
         <View style={styles.cardContainer}>
-          <View style={styles.card}>
-            <View style={styles.cardTextContainer}>
-              <Text style={styles.cardSubtitle}>Today's Question</Text>
-              <Text style={styles.cardTitle}>What's one thing you appreciate about our relationship?</Text>
-              <Text style={styles.cardSubtitle}>Reflect and share your thoughts</Text>
+          {data.daily_question ? (
+            <View style={styles.card}>
+              <View style={styles.cardTextContainer}>
+                <Text style={styles.cardSubtitle}>Today's Question</Text>
+                <Text style={styles.cardTitle}>{data.daily_question.question}</Text>
+                <Text style={styles.cardSubtitle}>
+                  {data.daily_question.my_answer ? "You answered!" : "Reflect and share your thoughts"}
+                </Text>
+              </View>
+              <Image
+                source={{ uri: "https://lh3.googleusercontent.com/aida-public/AB6AXuDierb3Xd_BNtMs4iV4uiwzNnpWssZSXGBHUR4-YMWOhERl-VxuCVN8ldj9HdzAqaJrsaX04eY37rSFf6Yh_28zdO1SQ4EtfDl2y4kljmryhaDu2GGbrW3Fcb5qHXaZQlYUBgwQC99GSeXugMe9D5EwM2rOQ80b81iU_m1h4DEjMYWZWbyVD-081N_ylhrpEQCZdUQ5nvJxOWtnFINE4DE7zrwbAUtGPKgK52Y9MJew0R2hIq7dpBp41faCr02hSWRuMLB1JX976xxp" }}
+                style={styles.cardImage}
+              />
             </View>
-            <Image
-              source={{ uri: "https://lh3.googleusercontent.com/aida-public/AB6AXuDierb3Xd_BNtMs4iV4uiwzNnpWssZSXGBHUR4-YMWOhERl-VxuCVN8ldj9HdzAqaJrsaX04eY37rSFf6Yh_28zdO1SQ4EtfDl2y4kljmryhaDu2GGbrW3Fcb5qHXaZQlYUBgwQC99GSeXugMe9D5EwM2rOQ80b81iU_m1h4DEjMYWZWbyVD-081N_ylhrpEQCZdUQ5nvJxOWtnFINE4DE7zrwbAUtGPKgK52Y9MJew0R2hIq7dpBp41faCr02hSWRuMLB1JX976xxp" }}
-              style={styles.cardImage}
-            />
-          </View>
+          ) : (
+            <View style={styles.emptyCard}>
+              <Text style={styles.emptyCardText}>질문이 준비 중입니다.</Text>
+              <Text style={styles.emptyCardSubText}>잠시만 기다려 주세요!</Text>
+            </View>
+          )}
         </View>
 
         {/* Relationship Goals */}
@@ -84,6 +129,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'white',
+  },
+  center: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   spacer: {
     height: 20,
@@ -180,6 +229,26 @@ const styles = StyleSheet.create({
     aspectRatio: 16 / 9,
     borderRadius: 12,
     backgroundColor: '#eee',
+  },
+  emptyCard: {
+    padding: 24,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#eee',
+    borderStyle: 'dashed',
+  },
+  emptyCardText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#141414',
+    marginBottom: 4,
+  },
+  emptyCardSubText: {
+    fontSize: 14,
+    color: '#757575',
   },
 });
 

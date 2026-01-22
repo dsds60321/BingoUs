@@ -8,8 +8,11 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { communityApi, PostCategory } from '../../api/community';
+import { missionsApi } from '../../api/missions';
 
 type PostCreateProps = {
   category: string;
@@ -27,6 +30,7 @@ const PostCreate = ({ category, onBack, onSubmit }: PostCreateProps) => {
   const [betting, setBetting] = useState(''); // For Missions
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [image, setImage] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleRandomImage = () => {
     // Random picsum image
@@ -34,26 +38,55 @@ const PostCreate = ({ category, onBack, onSubmit }: PostCreateProps) => {
     setImage(`https://picsum.photos/seed/${randomId}/400/300`);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!title) {
       Alert.alert('Missing Field', 'Please enter a title.');
       return;
     }
 
-    const newItem = {
-      id: Date.now().toString(),
-      category,
-      title,
-      description, // or content mapped later
-      date,
-      image,
-      topic,
-      betting,
-      status: category === 'Missions' ? 'In Progress' : (category === 'Reflections' ? 'Pending' : undefined),
-      content: category === 'Reflections' ? description : undefined, // Map description to content for Reflections
-    };
-
-    onSubmit(newItem);
+    setLoading(true);
+    try {
+      if (category === 'Missions') {
+        await missionsApi.createMission({
+          title,
+          description,
+          assignedDate: new Date().toISOString().split('T')[0], // Default to today
+          deadline: date,
+          reward: betting,
+        });
+      } else {
+        const categoryMap: Record<string, PostCategory> = {
+          'Photos': 'photo',
+          'Diary': 'diary',
+          'Reflections': 'reflection'
+        };
+        const apiCategory = categoryMap[category];
+        
+        if (apiCategory) {
+          await communityApi.createPost({
+            category: apiCategory,
+            title,
+            content: description,
+            eventDate: date,
+            topic: category === 'Reflections' ? topic : undefined,
+            // assetIds: [] // Handle image upload properly if needed, for now just create text/mock image post
+            // The API requires assetIds for images, but our MVP UI just takes a URL string.
+            // For now, we'll skip sending the image URL to the backend if the backend expects assetIds,
+            // or we'd need to implement the upload flow.
+            // Given the constraints, we will create the post without the image if it's a URL, 
+            // OR we need to modify the backend/API to accept a URL (which it doesn't seem to).
+            // We will proceed with creating the post with text data.
+          });
+        }
+      }
+      
+      onSubmit({}); // Signal success
+    } catch (error: any) {
+      console.error(error);
+      Alert.alert('Error', 'Failed to create post');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const renderFields = () => {
@@ -220,8 +253,12 @@ const PostCreate = ({ category, onBack, onSubmit }: PostCreateProps) => {
           <Text style={styles.backButtonText}>Cancel</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>New {category}</Text>
-        <TouchableOpacity onPress={handleSubmit} style={styles.saveButton}>
-          <Text style={styles.saveButtonText}>Save</Text>
+        <TouchableOpacity onPress={handleSubmit} style={styles.saveButton} disabled={loading}>
+          {loading ? (
+            <ActivityIndicator size="small" color="#181311" />
+          ) : (
+            <Text style={styles.saveButtonText}>Save</Text>
+          )}
         </TouchableOpacity>
       </View>
 

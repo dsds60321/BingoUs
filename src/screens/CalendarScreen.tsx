@@ -1,16 +1,55 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, CaretLeft, CaretRight } from '../components/Icons';
+import { calendarApi, CalendarEvent } from '../api/calendar';
 
 const CalendarScreen = () => {
   const insets = useSafeAreaInsets();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [events, setEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
   const today = new Date();
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
+
+  useEffect(() => {
+    fetchEvents();
+  }, [currentDate]);
+
+  const fetchEvents = async () => {
+    setLoading(true);
+    try {
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      
+      const response = await calendarApi.getEvents({
+        from: firstDay.toISOString().split('T')[0],
+        to: lastDay.toISOString().split('T')[0],
+      });
+
+      if (!response || !response.data || !response.data.map) {
+        setEvents([]);
+        return;
+      }
+
+      const mappedEvents = response.data.map((e: CalendarEvent) => ({
+        id: e.id,
+        title: e.title,
+        time: e.allDay ? 'All Day' : new Date(e.startAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        date: new Date(e.startAt),
+        allDay: e.allDay
+      }));
+      
+      setEvents(mappedEvents);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDayOfMonth = new Date(year, month, 1).getDay(); // 0 = Sunday, 1 = Monday, ...
@@ -35,12 +74,14 @@ const CalendarScreen = () => {
     setSelectedDate(new Date(year, month, day));
   };
 
-  const events = [
-    { title: 'Morning Yoga', time: '10:00 AM' },
-    { title: 'Lunch with Alex', time: '12:00 PM' },
-    { title: 'Grocery Shopping', time: '2:00 PM' },
-    { title: 'Dinner at Home', time: '6:00 PM' },
-  ];
+  const selectedDateEvents = events.filter(event => {
+    const eventDate = event.date;
+    return (
+      eventDate.getDate() === selectedDate.getDate() &&
+      eventDate.getMonth() === selectedDate.getMonth() &&
+      eventDate.getFullYear() === selectedDate.getFullYear()
+    );
+  });
 
   const isToday = (day: number) => {
     return (
@@ -125,14 +166,23 @@ const CalendarScreen = () => {
           {selectedDate.toDateString() === today.toDateString() ? 'Today' : selectedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}
         </Text>
 
-        {events.map((event, index) => (
-          <View key={index} style={styles.eventItem}>
-            <View style={styles.eventTextContainer}>
-              <Text style={styles.eventTitle}>{event.title}</Text>
-              <Text style={styles.eventTime}>{event.time}</Text>
+        {loading ? (
+           <ActivityIndicator size="small" color="#181410" style={{ marginTop: 20 }} />
+        ) : selectedDateEvents.length > 0 ? (
+          selectedDateEvents.map((event, index) => (
+            <View key={index} style={styles.eventItem}>
+              <View style={styles.eventTextContainer}>
+                <Text style={styles.eventTitle}>{event.title}</Text>
+                <Text style={styles.eventTime}>{event.time}</Text>
+              </View>
             </View>
+          ))
+        ) : (
+          <View style={styles.emptyEventContainer}>
+             <Text style={styles.emptyEventText}>일정이 없습니다.</Text>
+             <Text style={styles.emptyEventSubText}>새로운 일정을 추가해보세요!</Text>
           </View>
-        ))}
+        )}
       </ScrollView>
     </View>
   );
@@ -268,6 +318,21 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     color: '#8d755e',
     marginTop: 2,
+  },
+  emptyEventContainer: {
+    padding: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyEventText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#181410',
+    marginBottom: 4,
+  },
+  emptyEventSubText: {
+    fontSize: 14,
+    color: '#8d755e',
   },
 });
 

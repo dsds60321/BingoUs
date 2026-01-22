@@ -32,9 +32,8 @@ export const authApi = {
     provider_token?: string;
   }) => {
     const response = await client.post<AuthResponse>('/auth/login', payload);
-    console.log(response);
-    if (response.data.data.accessToken) {
-      setAccessToken(response.data.data.accessToken);
+    if (response.data.data.access_token) {
+      setAccessToken(response.data.data.access_token);
     }
     return response.data;
   },

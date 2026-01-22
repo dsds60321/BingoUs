@@ -1,10 +1,27 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, User, Gear, Bell, Calendar, Palette } from '../components/Icons';
+import { authApi } from '../api/auth';
 
 const SettingScreen = () => {
   const insets = useSafeAreaInsets();
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await authApi.getMe();
+        setUser(response.data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUser();
+  }, []);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -19,6 +36,16 @@ const SettingScreen = () => {
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.sectionTitle}>Account</Text>
+        
+        {loading ? (
+          <ActivityIndicator size="small" color="#151314" style={{ marginVertical: 20 }} />
+        ) : (
+          <View style={styles.userInfoContainer}>
+             <Text style={styles.userName}>{user?.displayName || 'User'}</Text>
+             <Text style={styles.userEmail}>{user?.email}</Text>
+          </View>
+        )}
+
         <TouchableOpacity style={styles.listItem}>
           <View style={styles.listIconContainer}>
             <User size={24} color="#151314" />
@@ -144,6 +171,20 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     color: '#7b6f73',
     marginTop: 2,
+  },
+  userInfoContainer: {
+    paddingHorizontal: 16,
+    marginBottom: 16,
+  },
+  userName: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#151314',
+  },
+  userEmail: {
+    fontSize: 14,
+    color: '#7b6f73',
+    marginTop: 4,
   },
 });
 
