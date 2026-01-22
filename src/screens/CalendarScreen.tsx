@@ -6,6 +6,7 @@ import { ArrowLeft, CaretLeft, CaretRight } from '../components/Icons';
 const CalendarScreen = () => {
   const insets = useSafeAreaInsets();
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const today = new Date();
 
   const year = currentDate.getFullYear();
@@ -30,12 +31,24 @@ const CalendarScreen = () => {
     setCurrentDate(new Date(year, month + 1, 1));
   };
 
+  const handleDateSelect = (day: number) => {
+    setSelectedDate(new Date(year, month, day));
+  };
+
   const events = [
     { title: 'Morning Yoga', time: '10:00 AM' },
     { title: 'Lunch with Alex', time: '12:00 PM' },
     { title: 'Grocery Shopping', time: '2:00 PM' },
     { title: 'Dinner at Home', time: '6:00 PM' },
   ];
+
+  const isToday = (day: number) => {
+    return (
+      day === today.getDate() &&
+      month === today.getMonth() &&
+      year === today.getFullYear()
+    );
+  };
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -75,14 +88,31 @@ const CalendarScreen = () => {
 
               {days.map((day) => {
                 const isSelected = 
-                  day === today.getDate() && 
-                  month === today.getMonth() && 
-                  year === today.getFullYear();
+                  day === selectedDate.getDate() && 
+                  month === selectedDate.getMonth() && 
+                  year === selectedDate.getFullYear();
                   
                 return (
-                  <TouchableOpacity key={day} style={styles.dayCell}>
-                    <View style={[styles.dayCircle, isSelected && styles.selectedDayCircle]}>
-                      <Text style={styles.dayText}>{day}</Text>
+                  <TouchableOpacity
+                    key={day}
+                    style={styles.dayCell}
+                    onPress={() => handleDateSelect(day)}
+                  >
+                    <View
+                      style={[
+                        styles.dayCircle,
+                        isSelected && styles.selectedDayCircle,
+                        !isSelected && isToday(day) && styles.todayCircle,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.dayText,
+                          isSelected && styles.selectedDayText,
+                        ]}
+                      >
+                        {day}
+                      </Text>
                     </View>
                   </TouchableOpacity>
                 );
@@ -91,7 +121,9 @@ const CalendarScreen = () => {
           </View>
         </View>
 
-        <Text style={styles.sectionTitle}>Today</Text>
+        <Text style={styles.sectionTitle}>
+          {selectedDate.toDateString() === today.toDateString() ? 'Today' : selectedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}
+        </Text>
 
         {events.map((event, index) => (
           <View key={index} style={styles.eventItem}>
@@ -194,10 +226,18 @@ const styles = StyleSheet.create({
   selectedDayCircle: {
     backgroundColor: '#ffb56b',
   },
+  todayCircle: {
+    borderWidth: 1,
+    borderColor: '#ffb56b',
+  },
   dayText: {
     fontSize: 14,
     fontWeight: '500',
     color: '#181410',
+  },
+  selectedDayText: {
+    color: 'white',
+    fontWeight: '700',
   },
   sectionTitle: {
     fontSize: 22,

@@ -1,101 +1,116 @@
-# Community Features & Data Structure
+# 커뮤니티 기능 & 데이터 구조
 
-This document outlines the features and data models for the Community section of the BingoUs application.
+BingoUs 애플리케이션의 커뮤니티(Community) 섹션에서 제공하는 기능과 데이터 모델을 정리했습니다. 커플이 함께 추억을 기록하고 과제를 수행하며 관계를 돌아볼 수 있도록 구성되어 있습니다.
 
-## Overview
-The Community screen allows couples to share various types of content:
-1.  **Photos**: Shared album for memories.
-2.  **Diary**: Daily records of events and feelings.
-3.  **Missions**: Joint tasks or challenges with deadlines and rewards/penalties.
-4.  **Reflections**: Apologies or reflections on arguments, requiring acknowledgement from the partner.
+- 커플이 함께 쓰는 사진 앨범, 일기, 미션, 반성문 네 가지 카테고리 제공
+- 모든 콘텐츠는 공통 데이터 구조를 공유하며 카테고리별 특성에 맞춘 필드를 확장
 
-## Features by Category
+## 카테고리별 기능
 
-### 1. Photos
-*   **Purpose**: Share visual memories.
-*   **List View**: Grid or feed of images with titles.
-*   **Detail View**: Full-size image, title, description, date.
-*   **Create View**: Upload image (from gallery/camera), add title, description, date.
+### 1. 사진 (Photos)
+- **목적**: 시각적인 추억을 빠르게 공유
+- **목록 화면**: 제목과 함께 이미지 그리드 혹은 피드 형태로 노출
+- **상세 화면**: 전체 이미지, 제목, 설명, 날짜 제공
+- **작성 화면**:
+  - 이미지 업로드(갤러리/카메라)
+  - 제목, 설명, 날짜 입력
 
-### 2. Diary
-*   **Purpose**: Detailed daily logs.
-*   **List View**: List of entries with thumbnails and previews.
-*   **Detail View**: Title, full content, date, attached image (optional).
-*   **Create View**: Write title, content, select date, attach image.
+### 2. 다이어리 (Diary)
+- **목적**: 하루의 사건과 감정을 상세하게 기록
+- **목록 화면**: 썸네일 이미지와 미리보기 텍스트가 포함된 리스트
+- **상세 화면**: 제목, 전체 내용, 날짜, 첨부 이미지(선택) 표시
+- **작성 화면**:
+  - 제목과 본문 작성
+  - 날짜 선택
+  - 이미지 첨부(선택)
 
-### 3. Missions
-*   **Purpose**: Track shared goals or challenges.
-*   **List View**: Cards showing status (In Progress/Completed), title, deadline.
-*   **Detail View**: Title, description, deadline, betting/penalty (what happens if failed/succeeded), status toggle.
-*   **Create View**: Set title, description, deadline, betting terms.
+### 3. 미션 (Missions)
+- **목적**: 함께하는 목표나 챌린지를 관리
+- **목록 화면**: 상태(진행 중/완료), 제목, 마감일이 표시된 카드 형태
+- **상세 화면**:
+  - 제목과 설명, 마감일
+  - 성공/실패 시 보상 또는 벌칙
+  - 상태 변경 토글
+- **작성 화면**:
+  - 제목과 설명 입력
+  - 마감일 설정
+  - 내기/벌칙 조건 정의
 
-### 4. Reflections (Ban-seong-mun)
-*   **Purpose**: Resolve conflicts and communicate feelings sincerely.
-*   **List View**: List of letters with dates and status (Unread/Read/Acknowledged).
-*   **Detail View**: Title, topic (what went wrong), date, detailed explanation/apology, Partner's Confirmation button.
-*   **Create View**:
-    *   **Title**: Short summary.
-    *   **Topic**: The core issue (e.g., "Late for date", "Forgot anniversary").
-    *   **Date**: Date of incident.
-    *   **Content**: "Why I was wrong" & sincere feelings.
+### 4. 반성문 (Reflections)
+- **목적**: 갈등을 해결하고 진심 어린 감정을 전달
+- **목록 화면**: 날짜와 상태(읽지 않음/읽음/확인됨)가 표시된 편지 목록
+- **상세 화면**:
+  - 제목, 주제(무엇이 문제였는지), 날짜
+  - 자세한 설명과 사과 내용
+  - 상대방 확인 버튼
+- **작성 화면**:
+  - 제목: 짧은 요약
+  - 주제: 핵심 문제(예: "데이트에 늦음", "기념일을 잊음")
+  - 날짜: 사건 발생일
+  - 내용: 잘못한 이유, 진솔한 감정, 사과
 
-## Data Models (JSON Structure)
+## 데이터 모델 (JSON)
 
-### Common Fields
-All items should share:
-- `id`: string (unique identifier)
-- `category`: 'Photos' | 'Diary' | 'Missions' | 'Reflections'
-- `createdAt`: string (ISO date)
-- `authorId`: string (user ID)
+### 공통 필드
+모든 아이템은 다음 공통 필드를 가집니다.
 
-### Photo Item
+| 필드 | 타입 | 설명 |
+| --- | --- | --- |
+| `id` | string | 고유 식별자 |
+| `category` | enum | `Photos`\|`Diary`\|`Missions`\|`Reflections` |
+| `createdAt` | string | ISO 8601 형식 생성일 |
+| `authorId` | string | 작성자 사용자 ID |
+
+### 사진 아이템 (Photo Item)
 ```json
 {
   "id": "p1",
   "category": "Photos",
-  "title": "Beach Trip",
-  "description": "Fun day in the sun.",
+  "title": "해변 여행",
+  "description": "햇살 아래서 즐거운 하루.",
   "image": "https://example.com/image.jpg",
   "date": "2024-01-20"
 }
 ```
 
-### Diary Item
+### 다이어리 아이템 (Diary Item)
 ```json
 {
   "id": "d1",
   "category": "Diary",
-  "title": "A quiet evening",
-  "description": "Long text content...",
+  "title": "조용한 저녁",
+  "description": "긴 텍스트 내용...",
   "image": "https://example.com/rain.jpg",
   "date": "2024-07-10"
 }
 ```
 
-### Mission Item
+### 미션 아이템 (Mission Item)
 ```json
 {
   "id": "m1",
   "category": "Missions",
-  "title": "Cook Pasta",
-  "description": "Make carbonara from scratch.",
+  "title": "파스타 만들기",
+  "description": "카르보나라를 처음부터 직접 만들기.",
   "deadline": "2024-07-20",
-  "betting": "Loser does dishes for a week",
-  "status": "In Progress", // 'In Progress' | 'Completed' | 'Failed'
+  "betting": "진 사람은 일주일 동안 설거지",
+  "status": "In Progress",
   "date": "2024-07-15"
 }
 ```
+> `status`: `In Progress`\|`Completed`\|`Failed`
 
-### Reflection Item
+### 반성문 아이템 (Reflection Item)
 ```json
 {
   "id": "r1",
   "category": "Reflections",
-  "title": "I'm sorry for being late",
-  "topic": "Punctuality",
-  "content": "I realized that my lateness made you feel unimportant...",
+  "title": "늦어서 미안해",
+  "topic": "시간 약속",
+  "content": "내가 늦은 행동이 너를 중요하지 않게 느끼게 했다는 걸 깨달았어...",
   "date": "2024-07-12",
-  "status": "Pending", // 'Pending' | 'Acknowledged'
-  "partnerComment": "" // Optional response from partner
+  "status": "Pending",
+  "partnerComment": ""
 }
 ```
+> `status`: `Pending`\|`Acknowledged`, `partnerComment`는 선택 필드

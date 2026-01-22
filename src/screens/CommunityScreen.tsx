@@ -157,15 +157,15 @@ const CommunityScreen = () => {
   }
 
   const renderItem = (post: any) => {
+    const key = post.id || Math.random().toString();
     const commonProps = {
-      key: post.id || Math.random().toString(), // Fallback key
       activeOpacity: 0.9,
       onPress: () => handlePostPress(post),
     };
 
     if (activeTab === 'Photos') {
       return (
-        <TouchableOpacity {...commonProps} style={styles.postCard}>
+        <TouchableOpacity key={key} {...commonProps} style={styles.postCard}>
           <Image source={{ uri: post.image }} style={styles.postImage} />
           <View style={styles.postContent}>
             <Text style={styles.postTitle}>{post.title}</Text>
@@ -178,7 +178,7 @@ const CommunityScreen = () => {
 
     if (activeTab === 'Diary') {
       return (
-        <TouchableOpacity {...commonProps} style={styles.diaryCard}>
+        <TouchableOpacity key={key} {...commonProps} style={styles.diaryCard}>
           {post.image ? (
             <Image source={{ uri: post.image }} style={styles.diaryImage} />
           ) : null}
@@ -195,7 +195,7 @@ const CommunityScreen = () => {
 
     if (activeTab === 'Missions') {
       return (
-        <TouchableOpacity {...commonProps} style={styles.missionCard}>
+        <TouchableOpacity key={key} {...commonProps} style={styles.missionCard}>
           {post.image ? <Image source={{ uri: post.image }} style={styles.missionImage} /> : null}
           <View style={styles.missionOverlay}>
             <View style={styles.missionContent}>
@@ -222,7 +222,7 @@ const CommunityScreen = () => {
 
     if (activeTab === 'Reflections') {
       return (
-        <TouchableOpacity {...commonProps} style={styles.reflectionCard}>
+        <TouchableOpacity key={key} {...commonProps} style={styles.reflectionCard}>
            <View style={styles.reflectionHeader}>
               <Text style={styles.reflectionTopic}>{post.topic || 'Reflection'}</Text>
               {post.status === 'Acknowledged' && <Text style={styles.reflectionStatus}>✓ Confirmed</Text>}
