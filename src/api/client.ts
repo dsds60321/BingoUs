@@ -1,7 +1,8 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
 // --- Configuration ---
-const BASE_URL = 'https://api.bingous.com/v1'; // Replace with env variable if needed
+// const BASE_URL = 'https://api.bingous.com/v1'; // Replace with env variable if needed
+const BASE_URL = 'http://localhost:8080/v1'; // Replace with env variable if needed
 
 // --- State ---
 let accessToken: string | null = null;

@@ -36,8 +36,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
       // But I will write the code to use the API.
       
       // Uncomment when backend is ready:
-      // await authApi.login({ provider: 'local', email, password });
-      
+      await authApi.login({ provider: 'local', email, password });
+
       // Mock success for UI demo:
       onLoginSuccess();
     } catch (error: any) {
