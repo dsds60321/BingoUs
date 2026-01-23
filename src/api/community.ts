@@ -30,7 +30,20 @@ export interface PostListResponse {
 export const communityApi = {
   getPosts: async (params?: { category?: PostCategory; cursor?: string; limit?: number }) => {
     const response = await client.get<PostListResponse>('/community/posts', { params });
-    return response.data;
+    
+    // Defensive check: Ensure we always return a valid PostListResponse structure
+    const defaultResponse = { data: { posts: [], nextCursor: null } };
+    
+    if (!response.data || !response.data.data) {
+      return defaultResponse;
+    }
+
+    return {
+      data: {
+        posts: response.data.data.posts || [],
+        nextCursor: response.data.data.nextCursor || null,
+      }
+    };
   },
 
   createPost: async (payload: {
@@ -42,11 +55,11 @@ export const communityApi = {
     assetIds?: number[];
   }) => {
     const response = await client.post('/community/posts', payload);
-    return response.data;
+    return response.data || {};
   },
 
   markAsRead: async (postId: string) => {
     const response = await client.post(`/community/posts/${postId}/read`);
-    return response.data;
+    return response.data || { success: true };
   },
 };

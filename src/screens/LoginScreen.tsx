@@ -19,6 +19,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
     }
 
     try {
+      console.log('--- ' , email , password)
       setLoading(true);
       await authApi.login({ provider: 'local', email, password });
       onLoginSuccess();

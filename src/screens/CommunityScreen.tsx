@@ -34,7 +34,12 @@ const CommunityScreen = () => {
     try {
       if (activeTab === 'Missions') {
         const response = await missionsApi.getMissions();
-        const mappedMissions = response.data.map((m: Mission) => ({
+        // Defensive check: Handle both { data: [...] } and direct array response [...]
+        const missionsData = Array.isArray(response) 
+          ? response 
+          : (Array.isArray(response?.data) ? response.data : []);
+
+        const mappedMissions = missionsData.map((m: Mission) => ({
           id: m.id,
           category: 'Missions',
           title: m.title,
@@ -52,22 +57,25 @@ const CommunityScreen = () => {
           'Diary': 'diary',
           'Reflections': 'reflection'
         };
-        const apiCategory = categoryMap[activeTab];
-        if (apiCategory) {
-          const response = await communityApi.getPosts({ category: apiCategory });
-          const mappedPosts = response.data.posts.map((p: Post) => ({
-            id: p.id,
-            category: activeTab,
-            title: p.title,
-            description: p.content, // Map content to description
-            content: p.content,
-            date: p.eventDate || p.createdAt.split('T')[0],
-            image: p.images?.[0]?.url, // Take first image
-            topic: p.topic,
-            status: p.receipts?.partnerRead ? 'Acknowledged' : 'Pending',
-          }));
-          setPosts(mappedPosts);
-        }
+
+          const apiCategory = categoryMap[activeTab];
+          if (apiCategory) {
+            const response = await communityApi.getPosts({ category: apiCategory });
+            const postsData = response.data?.posts || [];
+            const mappedPosts = postsData.map((p: Post) => ({
+              id: p.id,
+              category: activeTab,
+              title: p.title,
+              description: p.content, // Map content to description
+              content: p.content,
+              date: p.eventDate || p.createdAt.split('T')[0],
+              image: p.images?.[0]?.url, // Take first image
+              topic: p.topic,
+              status: p.receipts?.partnerRead ? 'Acknowledged' : 'Pending',
+            }));
+            setPosts(mappedPosts);
+          }
+        
       }
     } catch (error) {
       console.error(error);
